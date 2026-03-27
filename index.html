@@ -280,6 +280,54 @@
   }
   .yeast-note strong { font-weight: 500; }
 
+  /* FERMENT MODE SELECTOR */
+  .mode-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .mode-btn {
+    background: var(--white);
+    border: 1px solid var(--stone-light);
+    border-radius: 14px;
+    padding: 0.85rem 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .mode-btn .m-icon { font-size: 1.3rem; display: block; margin-bottom: 4px; }
+  .mode-btn .m-name {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--charcoal);
+    margin-bottom: 2px;
+    line-height: 1.2;
+  }
+  .mode-btn .m-time {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--stone);
+    letter-spacing: 0.04em;
+  }
+  .mode-btn.active { background: var(--terracotta); border-color: var(--terracotta); }
+  .mode-btn.active .m-name,
+  .mode-btn.active .m-time { color: white; }
+  .fridge-row.hidden { display: none; }
+  .mode-info {
+    margin: 0 1.5rem 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    background: var(--terracotta-pale);
+    border-left: 3px solid var(--terracotta);
+    color: var(--charcoal-soft);
+  }
+  .mode-info strong { color: var(--terracotta); }
+
   /* TIMELINE */
   .timeline-card {
     background: var(--white);
@@ -619,6 +667,26 @@
     </div>
   </div>
 
+  <!-- FERMENT MODE -->
+  <p class="section-label">Ferment method</p>
+  <div class="mode-grid">
+    <button class="mode-btn" data-mode="sameday">
+      <span class="m-icon">⚡</span>
+      <span class="m-name">Same day</span>
+      <span class="m-time">8h total</span>
+    </button>
+    <button class="mode-btn" data-mode="overnight">
+      <span class="m-icon">🌙</span>
+      <span class="m-name">Overnight counter</span>
+      <span class="m-time">12–16h</span>
+    </button>
+    <button class="mode-btn active" data-mode="cold">
+      <span class="m-icon">❄️</span>
+      <span class="m-name">Cold fridge</span>
+      <span class="m-time">18–34h</span>
+    </button>
+  </div>
+
   <!-- TIMELINE -->
   <p class="section-label">Cook day planner</p>
   <div class="timeline-card">
@@ -626,7 +694,8 @@
       <h2>Your schedule</h2>
       <p>Set fridge-in and cook time — everything calculated for you</p>
     </div>
-    <div class="date-row">
+    <div id="mode-info" class="mode-info"></div>
+    <div class="date-row fridge-row" id="fridge-row">
       <label>Balls into fridge</label>
       <input type="datetime-local" id="fridge-in-time" />
     </div>
@@ -699,14 +768,29 @@
 <script>
   const BALL_WEIGHT = 280;
   const SALT_PERCENT = 0.028;
-  // Allinson's Easy Bake is instant yeast — use 0.1% for long cold ferment (less is more with instant)
-  const YEAST_PERCENT = 0.001;
+
+  // Yeast % by ferment mode (Allinson's Easy Bake instant)
+  const YEAST_BY_MODE = {
+    sameday:   0.006,  // 0.6% — needs to work fast in 8h
+    overnight: 0.002,  // 0.2% — 12-16h counter ferment
+    cold:      0.001   // 0.1% — long cold ferment, less is more
+  };
+
+  const MODE_INFO = {
+    sameday:   '<strong>Same day (8h):</strong> Higher yeast dose, warm spot needed (24–26°C). Mix in the morning, cook in the evening. Tight timing — don\'t let it over-prove. Good results, less complex flavour.',
+    overnight: '<strong>Overnight counter (12–16h):</strong> Mix in the evening, cook next day. Leave covered on the counter at room temp. More flavour than same day, but watch your kitchen temperature — too warm overnight and it can over-prove.',
+    cold:      '<strong>Cold fridge ferment (18–34h):</strong> The best flavour and most forgiving method. Mix the evening before, cold ferment overnight or longer, take out 7h before cooking. Lowest yeast dose — the fridge does the work slowly.'
+  };
 
   let pizzas = 6;
   let hydration = 0.62;
   let selectedFlour = 'pizzeria';
+  let fermentMode = 'cold';
+
+  function getYeastPercent() { return YEAST_BY_MODE[fermentMode]; }
 
   function calcIngredients() {
+    const YEAST_PERCENT = getYeastPercent();
     const totalDough = pizzas * BALL_WEIGHT;
     const flour = Math.round(totalDough / (1 + hydration + SALT_PERCENT + YEAST_PERCENT));
     const water = Math.round(flour * hydration);
@@ -716,42 +800,30 @@
   }
 
   function flourNote() {
-    const notes = {
+    return {
       'pizzeria': 'Caputo Pizzeria — 12.5% protein. Tipo 00 milled for wood-fired ovens.',
-      'nuvola': 'Caputo Nuvola — higher protein, more extensible. Ideal for a lighter, airier cornicione.'
-    };
-    return notes[selectedFlour];
+      'nuvola':   'Caputo Nuvola — higher protein, more extensible. Ideal for a lighter, airier cornicione.'
+    }[selectedFlour];
   }
 
   function renderIngredients() {
     const { flour, water, salt, yeast, totalDough } = calcIngredients();
-    const list = document.getElementById('ingredients-list');
-    const pill = document.getElementById('pizza-pill');
-    pill.textContent = `${pizzas} pizza${pizzas !== 1 ? 's' : ''}`;
-
+    document.getElementById('pizza-pill').textContent = `${pizzas} pizza${pizzas !== 1 ? 's' : ''}`;
     const items = [
       { name: `Caputo ${selectedFlour === 'pizzeria' ? 'Pizzeria' : 'Nuvola'} flour`, note: flourNote(), amount: flour, unit: 'g' },
       { name: 'Water', note: `Room temp, ~21°C — ${Math.round(hydration * 100)}% hydration`, amount: water, unit: 'g' },
-      { name: 'Fine sea salt', note: 'Add to water and stir to dissolve before mixing', amount: salt, unit: 'g' },
-      { name: "Allinson's Easy Bake yeast", note: 'Instant yeast — mix directly into flour, do not dissolve', amount: yeast, unit: 'g' },
+      { name: 'Fine sea salt', note: 'Dissolve in water before mixing', amount: salt, unit: 'g' },
+      { name: "Allinson's Easy Bake yeast", note: 'Instant — mix directly into flour dry, do not dissolve', amount: yeast, unit: 'g' },
     ];
-
-    list.innerHTML = items.map(i => `
+    document.getElementById('ingredients-list').innerHTML = items.map(i => `
       <div class="ingredient-row">
-        <div class="ingredient-name">
-          ${i.name}
-          <small>${i.note}</small>
-        </div>
+        <div class="ingredient-name">${i.name}<small>${i.note}</small></div>
         <div class="ingredient-amount">${i.amount}<span>${i.unit}</span></div>
-      </div>
-    `).join('');
-
-    // Allinson's Easy Bake is instant — show tsp conversion (1 tsp ≈ 3g)
+      </div>`).join('');
     const tsp = parseFloat((yeast / 3).toFixed(2));
-    document.getElementById('yeast-note').innerHTML = `
-      <strong>Allinson's Easy Bake (instant):</strong> ${yeast}g ≈ ${tsp} tsp — mix straight into the flour dry, don't dissolve.<br>
-      Total dough weight: <strong>${totalDough}g</strong> · ${pizzas} × 280g balls
-    `;
+    document.getElementById('yeast-note').innerHTML =
+      `<strong>Allinson's Easy Bake (instant):</strong> ${yeast}g ≈ ${tsp} tsp — straight into flour dry.<br>
+       Total dough: <strong>${totalDough}g</strong> · ${pizzas} × 280g balls`;
   }
 
   function formatTime(date) {
@@ -763,119 +835,86 @@
     const fridgeInput = document.getElementById('fridge-in-time').value;
     const container = document.getElementById('timeline-steps');
     const badge = document.getElementById('ferment-badge');
+    const modeInfoEl = document.getElementById('mode-info');
+    const fridgeRow = document.getElementById('fridge-row');
+
+    // Show/hide fridge row and mode info
+    modeInfoEl.innerHTML = MODE_INFO[fermentMode];
+    fridgeRow.classList.toggle('hidden', fermentMode !== 'cold');
 
     if (!cookInput) {
-      container.innerHTML = `<div style="padding:1.25rem 1.5rem; font-size:0.82rem; color:var(--stone); text-align:center;">Set your cook time above to generate your schedule</div>`;
+      container.innerHTML = `<div style="padding:1.25rem 1.5rem;font-size:0.82rem;color:var(--stone);text-align:center;">Set your cook time to generate your schedule</div>`;
       badge.innerHTML = '';
       return;
     }
 
     const cookTime = new Date(cookInput);
+    let allSteps = [];
+    badge.innerHTML = '';
 
-    // Cold ferment duration
-    let coldFermentMins = 20 * 60; // default 20h
-    let fridgeInTime = null;
-    if (fridgeInput) {
-      fridgeInTime = new Date(fridgeInput);
-      coldFermentMins = Math.round((cookTime - fridgeInTime) / 60000);
-    }
-
-    const coldFermentHrs = Math.round(coldFermentMins / 60 * 10) / 10;
-
-    // Fridge-out: 7h before cook (safe midpoint of 6-8h window)
-    const fridgeOutMins = 7 * 60;
-
-    // Ferment badge
-    if (fridgeInput) {
-      let badgeClass = 'ok';
-      let badgeMsg = '';
-      if (coldFermentMins < 16 * 60) {
-        badgeClass = 'warn';
-        badgeMsg = `<strong>⚠ Short ferment (${coldFermentHrs}h):</strong> Minimum is 18h for full flavour development. Consider mixing earlier or cooking later.`;
-      } else if (coldFermentMins <= 28 * 60) {
-        badgeClass = 'ok';
-        badgeMsg = `<strong>✓ ${coldFermentHrs}h cold ferment</strong> — perfect range. Expect excellent flavour and a well-structured dough.`;
-      } else if (coldFermentMins <= 36 * 60) {
-        badgeClass = 'warn';
-        badgeMsg = `<strong>⚠ Long ferment (${coldFermentHrs}h):</strong> Pushing beyond 28h with instant yeast. Dough will be very extensible. Check balls when you take them out — if they look collapsed or very bubbly, cook sooner.`;
-      } else {
-        badgeClass = 'over';
-        badgeMsg = `<strong>✗ Very long ferment (${coldFermentHrs}h):</strong> High risk of over-fermentation. The gluten structure may break down. Consider reducing yeast next time or cooking earlier.`;
+    if (fermentMode === 'cold') {
+      let coldFermentMins = 20 * 60;
+      let fridgeInTime = null;
+      if (fridgeInput) {
+        fridgeInTime = new Date(fridgeInput);
+        coldFermentMins = Math.round((cookTime - fridgeInTime) / 60000);
       }
-      badge.innerHTML = `<div class="ferment-badge ${badgeClass}">${badgeMsg}</div>`;
-    } else {
-      badge.innerHTML = '';
-    }
+      const coldFermentHrs = Math.round(coldFermentMins / 60 * 10) / 10;
 
-    // Work out when balls went in fridge (for display in timeline)
-    // If fridge-in not set, calculate from cook time - coldFermentMins
-    const ballsInFridge = fridgeInTime || new Date(cookTime.getTime() - coldFermentMins * 60000);
-
-    // Mix time: 5.5h before balls go in fridge (to account for autolyse + 4 folds + bulk)
-    const mixOffset = -(coldFermentMins + 5.5 * 60);
-    const fold1Offset = -(coldFermentMins + 4.5 * 60);
-    const bulkOffset = -(coldFermentMins + 3 * 60);
-    const ballOffset = -(coldFermentMins + 0);
-
-    const allSteps = [
-      {
-        offset: mixOffset,
-        label: 'Mix dough & autolyse',
-        desc: "Mix Allinson's Easy Bake yeast into flour dry. Add most of water, mix to shaggy mass, rest 30 min. Then add salt dissolved in reserved water. Mix until smooth.",
-        duration: '30 min rest',
-        key: true
-      },
-      {
-        offset: fold1Offset,
-        label: 'Stretch & fold (4 sets)',
-        desc: 'Wet hands. Stretch each side up and fold to centre. Rotate bowl 90° and repeat. Do 4 sets total, every 30 minutes.',
-        duration: 'Every 30 min × 4',
-        key: false
-      },
-      {
-        offset: bulkOffset,
-        label: 'Bulk ferment at room temp',
-        desc: 'Cover bowl and leave undisturbed. Dough should grow 20–30% and look pillowy.',
-        duration: '2–3 hours',
-        key: false
-      },
-      {
-        offset: ballOffset,
-        label: 'Ball up & into fridge',
-        desc: `Divide into ${pizzas} × 280g balls. Shape tightly with surface tension. Place in lightly oiled tray, cover tightly with cling film. Into the fridge now.`,
-        duration: `${coldFermentHrs}h cold ferment`,
-        key: true
-      },
-      {
-        offset: -fridgeOutMins,
-        label: 'Take dough out of fridge',
-        desc: 'Leave balls covered with cling film in the tray — do not uncover. They need to come to room temperature slowly. Do not remove cling film until just before stretching, or a skin will form.',
-        duration: '7h at room temp',
-        key: true
-      },
-      {
-        offset: -(2 * 60),
-        label: 'Check the dough',
-        desc: 'Peek under the cling film. Balls should be soft, slightly domed, with a gentle sheen. Press one lightly — it should spring back slowly. If still firm and cold, leave longer.',
-        duration: 'Readiness check',
-        key: false
-      },
-      {
-        offset: -30,
-        label: 'Pre-heat the Gozney Arc',
-        desc: 'Full flame for 20–30 min. Target 430–450°C on the stone. Use an IR thermometer to confirm before launching.',
-        duration: '20–30 min pre-heat',
-        key: true
-      },
-      {
-        offset: 0,
-        label: '🍕 Cook time',
-        desc: 'Uncover balls just before opening. Press from centre outward, leaving a 2cm rim. Launch. 60–90 sec per pizza, rotate at 45 sec.',
-        duration: null,
-        key: true,
-        isCook: true
+      if (fridgeInput) {
+        let bc = 'ok', bm = '';
+        if (coldFermentMins < 16*60) {
+          bc = 'warn'; bm = `<strong>⚠ Short ferment (${coldFermentHrs}h):</strong> Minimum 18h for full flavour. Mix earlier or cook later.`;
+        } else if (coldFermentMins <= 28*60) {
+          bc = 'ok'; bm = `<strong>✓ ${coldFermentHrs}h cold ferment</strong> — perfect range. Excellent flavour and structure.`;
+        } else if (coldFermentMins <= 36*60) {
+          bc = 'warn'; bm = `<strong>⚠ Long ferment (${coldFermentHrs}h):</strong> Beyond 28h. Dough will be very extensible. Check balls on removal — if collapsed or very bubbly, cook sooner.`;
+        } else {
+          bc = 'over'; bm = `<strong>✗ Very long ferment (${coldFermentHrs}h):</strong> High over-fermentation risk. Gluten structure may break down.`;
+        }
+        badge.innerHTML = `<div class="ferment-badge ${bc}">${bm}</div>`;
       }
-    ];
+
+      allSteps = [
+        { offset: -(coldFermentMins + 5.5*60), label: 'Mix dough & autolyse', desc: "Mix Allinson's Easy Bake yeast into flour dry. Add most of water, mix to shaggy mass, rest 30 min. Then add salt dissolved in reserved water.", duration: '30 min rest', key: true },
+        { offset: -(coldFermentMins + 4.5*60), label: 'Stretch & fold (4 sets)', desc: 'Wet hands. Stretch each side up and fold to centre. Rotate 90° and repeat. 4 sets total, every 30 min.', duration: 'Every 30 min × 4', key: false },
+        { offset: -(coldFermentMins + 3*60),   label: 'Bulk ferment at room temp', desc: 'Cover and leave undisturbed. Dough should grow 20–30% and look pillowy.', duration: '2–3 hours', key: false },
+        { offset: -(coldFermentMins),           label: 'Ball up & into fridge', desc: `Divide into ${pizzas} × 280g balls. Shape tightly. Place in lightly oiled tray, cover with cling film. Into the fridge now.`, duration: `${coldFermentHrs}h cold ferment`, key: true },
+        { offset: -(7*60),                      label: 'Take out of fridge', desc: 'Leave balls covered with cling film — do not uncover yet or a skin will form. Let them come to room temp slowly.', duration: '7h at room temp', key: true },
+        { offset: -(2*60),                      label: 'Check the dough', desc: 'Peek under cling film. Balls should be soft, slightly domed, with a gentle sheen. Press one — it should spring back slowly. Still firm? Leave longer.', duration: 'Readiness check', key: false },
+        { offset: -30,                          label: 'Pre-heat the Gozney Arc', desc: 'Full flame for 20–30 min. Target 430–450°C stone temp. Confirm with IR thermometer before launching.', duration: '20–30 min', key: true },
+        { offset: 0,                            label: '🍕 Cook time', desc: 'Uncover balls just before opening. Press from centre outward, leaving a 2cm rim. 60–90 sec per pizza, rotate at 45 sec.', duration: null, key: true, isCook: true }
+      ];
+
+    } else if (fermentMode === 'overnight') {
+      // Counter overnight: mix ~16h before cook, ball and leave on counter covered
+      const fermentH = 14; // target midpoint
+      allSteps = [
+        { offset: -(fermentH*60 + 4*60), label: 'Mix dough & autolyse', desc: "Mix Allinson's Easy Bake yeast into flour dry. Add most of water, rest 30 min. Add salt dissolved in reserved water. Mix until smooth.", duration: '30 min rest', key: true },
+        { offset: -(fermentH*60 + 3*60), label: 'Stretch & fold (4 sets)', desc: 'Wet hands. Stretch and fold every 30 min for 4 sets total. Cover between sets.', duration: 'Every 30 min × 4', key: false },
+        { offset: -(fermentH*60 + 1.5*60), label: 'Bulk ferment — short', desc: 'Cover and leave at room temp for 60–90 min until grown by ~20%.', duration: '60–90 min', key: false },
+        { offset: -(fermentH*60),         label: 'Ball up on counter', desc: `Divide into ${pizzas} × 280g balls. Shape tightly. Place in lightly oiled tray, cover tightly with cling film. Leave on the counter at room temp overnight — ideally 18–20°C.`, duration: `~${fermentH}h counter ferment`, key: true },
+        { offset: -(2*60),                label: 'Check the dough', desc: 'Check under cling film. Balls should be puffy, soft and domed. If over-proved (flat, very bubbly), cook immediately. If under-proved (dense, tight), leave another 30–60 min.', duration: 'Readiness check', key: false },
+        { offset: -30,                    label: 'Pre-heat the Gozney Arc', desc: 'Full flame for 20–30 min. Target 430–450°C on the stone. Use an IR thermometer.', duration: '20–30 min', key: true },
+        { offset: 0,                      label: '🍕 Cook time', desc: 'Uncover just before opening. Press from centre outward, leaving a 2cm rim. 60–90 sec per pizza, rotate at 45 sec.', duration: null, key: true, isCook: true }
+      ];
+
+      badge.innerHTML = `<div class="ferment-badge warn"><strong>⚠ Watch your kitchen temperature overnight.</strong> If it stays above 22°C, the dough may over-prove before morning. A cooler spot (18–20°C) is ideal. Check the dough first thing when you wake up.</div>`;
+
+    } else if (fermentMode === 'sameday') {
+      // Same day: mix 8h before cook, warm spot needed
+      allSteps = [
+        { offset: -(8*60), label: 'Mix dough & autolyse', desc: "Mix Allinson's Easy Bake yeast into flour dry. Add most of water, mix to shaggy mass, rest 30 min. Add salt dissolved in reserved water. Mix until smooth and elastic.", duration: '30 min rest', key: true },
+        { offset: -(7*60), label: 'Stretch & fold (4 sets)', desc: 'Wet hands. Stretch each side up and fold to centre every 30 min. 4 sets total. Keep covered between sets.', duration: 'Every 30 min × 4', key: false },
+        { offset: -(5*60), label: 'Bulk ferment — warm spot', desc: 'Find your warmest spot (24–26°C ideally — near the oven, or a proving drawer). Cover and leave. Dough must grow 50–70% in this stage.', duration: '2.5–3 hours', key: false },
+        { offset: -(2.5*60), label: 'Ball up', desc: `Divide into ${pizzas} × 280g balls. Shape tightly with good surface tension. Place in lightly oiled tray, cover with cling film. Keep in the warm spot.`, duration: '2h prove', key: true },
+        { offset: -(1*60),   label: 'Final check & readiness test', desc: 'Press a ball gently — it should spring back slowly and feel pillowy, not dense. If it snaps back immediately, it needs more time. If it doesn\'t spring back at all, cook now.', duration: 'Readiness check', key: false },
+        { offset: -30,       label: 'Pre-heat the Gozney Arc', desc: 'Full flame for 20–30 min. Target 430–450°C on the stone. Use an IR thermometer before launching.', duration: '20–30 min', key: true },
+        { offset: 0,         label: '🍕 Cook time', desc: 'Uncover just before opening. Press from centre outward, leaving a 2cm rim. 60–90 sec per pizza, rotate at 45 sec.', duration: null, key: true, isCook: true }
+      ];
+
+      badge.innerHTML = `<div class="ferment-badge warn"><strong>⚠ Same day — timing is everything.</strong> You need a consistently warm spot (24–26°C). In a cool kitchen this won't work. Do not rush the bulk ferment — under-proved dough on the Arc will be dense and won't char properly.</div>`;
+    }
 
     container.innerHTML = allSteps.map((step, i) => {
       const t = new Date(cookTime.getTime() + step.offset * 60 * 1000);
@@ -892,28 +931,34 @@
             <p>${step.desc}</p>
             ${step.duration ? `<span class="step-duration">${step.duration}</span>` : ''}
           </div>
-        </div>
-      `;
+        </div>`;
     }).join('');
   }
 
-  // Init times: fridge in = tonight 22:00, cook = tomorrow 19:00
-  function initCookTime() {
+  function initTimes() {
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-
     const fridgeIn = new Date(now);
     fridgeIn.setHours(22, 0, 0, 0);
     if (fridgeIn < now) fridgeIn.setDate(fridgeIn.getDate() + 1);
-
     const cookTime = new Date(fridgeIn);
     cookTime.setDate(cookTime.getDate() + 1);
     cookTime.setHours(19, 0, 0, 0);
-
     document.getElementById('fridge-in-time').value = fmt(fridgeIn);
     document.getElementById('cook-time').value = fmt(cookTime);
   }
+
+  // Mode buttons
+  document.querySelectorAll('[data-mode]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      fermentMode = btn.dataset.mode;
+      renderIngredients();
+      renderTimeline();
+    });
+  });
 
   // Hydration buttons
   document.querySelectorAll('[data-hydration]').forEach(btn => {
@@ -948,7 +993,7 @@
   document.getElementById('fridge-in-time').addEventListener('change', renderTimeline);
 
   // Init
-  initCookTime();
+  initTimes();
   renderIngredients();
   renderTimeline();
 </script>

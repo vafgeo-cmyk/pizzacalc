@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Neapolitan Dough Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #F8F3EC;
+    --cream-dark: #EFE8DC;
+    --terracotta: #C4562A;
+    --terracotta-light: #E8734A;
+    --terracotta-pale: #FAE8E0;
+    --charcoal: #2A2420;
+    --charcoal-soft: #4A3F38;
+    --stone: #8A7B70;
+    --stone-light: #C8BBB0;
+    --white: #FDFAF6;
+    --green: #3A6B3A;
+    --green-pale: #E8F2E8;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--charcoal);
+    min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--charcoal);
+    color: var(--white);
+    padding: 2rem 1.5rem 1.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120%;
+    height: 60px;
+    background: var(--cream);
+    border-radius: 50%;
+  }
+  .header-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0;
+  }
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 0.3rem;
+  }
+  .header p {
+    font-size: 0.8rem;
+    color: var(--stone-light);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 300;
+  }
+
+  /* MAIN LAYOUT */
+  .container {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--stone);
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+  }
+
+  /* PIZZA COUNTER */
+  .counter-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--stone-light);
+    box-shadow: 0 2px 12px rgba(42,36,32,0.06);
+  }
+  .counter-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .counter-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: var(--charcoal);
+  }
+  .counter-label span {
+    display: block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--stone);
+    margin-top: 2px;
+    letter-spacing: 0;
+  }
+  .counter-controls {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--cream-dark);
+    border-radius: 50px;
+    padding: 4px;
+  }
+  .counter-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1.3rem;
+    font-weight: 300;
+    color: var(--charcoal);
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .counter-btn:active { background: var(--stone-light); }
+  .counter-btn.primary {
+    background: var(--terracotta);
+    color: white;
+  }
+  .counter-btn.primary:active { background: var(--terracotta-light); }
+  .counter-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--charcoal);
+    min-width: 50px;
+    text-align: center;
+  }
+
+  /* HYDRATION SELECTOR */
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .option-btn {
+    background: var(--white);
+    border: 1px solid var(--stone-light);
+    border-radius: 12px;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .option-btn .opt-val {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--charcoal);
+    margin-bottom: 2px;
+  }
+  .option-btn .opt-desc {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--stone);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .option-btn.active {
+    background: var(--terracotta);
+    border-color: var(--terracotta);
+  }
+  .option-btn.active .opt-val,
+  .option-btn.active .opt-desc {
+    color: white;
+  }
+
+  /* INGREDIENTS RESULT */
+  .ingredients-card {
+    background: var(--white);
+    border-radius: 20px;
+    border: 1px solid var(--stone-light);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 12px rgba(42,36,32,0.06);
+  }
+  .ingredients-header {
+    background: var(--charcoal);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ingredients-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--white);
+    letter-spacing: 0;
+  }
+  .pill {
+    background: var(--terracotta);
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 50px;
+    letter-spacing: 0.05em;
+  }
+  .ingredient-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid var(--cream-dark);
+    gap: 1rem;
+  }
+  .ingredient-row:last-child { border-bottom: none; }
+  .ingredient-name {
+    font-size: 0.95rem;
+    color: var(--charcoal);
+    font-weight: 400;
+  }
+  .ingredient-name small {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--stone);
+    margin-top: 1px;
+  }
+  .ingredient-amount {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--terracotta);
+    white-space: nowrap;
+  }
+  .ingredient-amount span {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--stone);
+    margin-left: 2px;
+  }
+
+  /* YEAST NOTE */
+  .yeast-note {
+    background: var(--green-pale);
+    border-left: 3px solid var(--green);
+    border-radius: 0 10px 10px 0;
+    padding: 0.75rem 1rem;
+    font-size: 0.82rem;
+    color: var(--green);
+    margin: 0 1.5rem 1rem;
+    line-height: 1.5;
+  }
+  .yeast-note strong { font-weight: 500; }
+
+  /* TIMELINE */
+  .timeline-card {
+    background: var(--white);
+    border-radius: 20px;
+    border: 1px solid var(--stone-light);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 12px rgba(42,36,32,0.06);
+  }
+  .timeline-header {
+    background: var(--terracotta);
+    padding: 1rem 1.5rem;
+  }
+  .timeline-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: white;
+  }
+  .timeline-header p {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.75);
+    margin-top: 2px;
+  }
+
+  /* Cook date inputs */
+  .date-row {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--cream-dark);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .date-row label {
+    font-size: 0.82rem;
+    color: var(--stone);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .date-row input[type="datetime-local"] {
+    flex: 1;
+    min-width: 180px;
+    border: 1px solid var(--stone-light);
+    border-radius: 10px;
+    padding: 0.45rem 0.75rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    color: var(--charcoal);
+    background: var(--cream);
+    outline: none;
+  }
+  .date-row input:focus {
+    border-color: var(--terracotta);
+  }
+
+  .step-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--cream-dark);
+    align-items: flex-start;
+  }
+  .step-item:last-child { border-bottom: none; }
+  .step-time {
+    min-width: 60px;
+    text-align: right;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--stone);
+    letter-spacing: 0.03em;
+    padding-top: 2px;
+    line-height: 1.4;
+  }
+  .step-line {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 4px;
+  }
+  .step-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--terracotta);
+    flex-shrink: 0;
+  }
+  .step-dot.dim { background: var(--stone-light); }
+  .step-connector {
+    width: 2px;
+    flex: 1;
+    min-height: 24px;
+    background: var(--cream-dark);
+    margin-top: 4px;
+  }
+  .step-content {
+    flex: 1;
+    padding-bottom: 0.5rem;
+  }
+  .step-content h3 {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--charcoal);
+    margin-bottom: 3px;
+    line-height: 1.3;
+  }
+  .step-content p {
+    font-size: 0.78rem;
+    color: var(--stone);
+    line-height: 1.5;
+  }
+  .step-duration {
+    display: inline-block;
+    background: var(--terracotta-pale);
+    color: var(--terracotta);
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 4px;
+    letter-spacing: 0.04em;
+  }
+
+  /* TECHNIQUE TIPS */
+  .tips-card {
+    background: var(--white);
+    border-radius: 20px;
+    border: 1px solid var(--stone-light);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 12px rgba(42,36,32,0.06);
+  }
+  .tips-header {
+    background: var(--charcoal-soft);
+    padding: 1rem 1.5rem;
+  }
+  .tips-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: white;
+  }
+  .tip-item {
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid var(--cream-dark);
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+  .tip-item:last-child { border-bottom: none; }
+  .tip-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--terracotta-pale);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .tip-content h4 {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--charcoal);
+    margin-bottom: 2px;
+  }
+  .tip-content p {
+    font-size: 0.78rem;
+    color: var(--stone);
+    line-height: 1.5;
+  }
+
+  /* FLOUR TYPE SELECTOR */
+  .flour-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 1.5rem;
+    max-width: 400px;
+  }
+  .flour-btn {
+    background: var(--white);
+    border: 1px solid var(--stone-light);
+    border-radius: 12px;
+    padding: 0.8rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .flour-btn .f-name {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--charcoal);
+    margin-bottom: 2px;
+  }
+  .flour-btn .f-desc {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--stone);
+    line-height: 1.4;
+  }
+  .flour-btn.active {
+    border-color: var(--terracotta);
+    background: var(--terracotta-pale);
+  }
+  .flour-btn.active .f-name { color: var(--terracotta); }
+
+  .ferment-badge {
+    margin: 0 1.5rem 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  .ferment-badge.ok {
+    background: var(--green-pale);
+    border-left: 3px solid var(--green);
+    color: var(--green);
+  }
+  .ferment-badge.warn {
+    background: #FEF3E2;
+    border-left: 3px solid #C47A1A;
+    color: #7A4A0A;
+  }
+  .ferment-badge.over {
+    background: #FEE8E8;
+    border-left: 3px solid #C43A2A;
+    color: #7A1A0A;
+  }
+  .gozney-note {
+    background: var(--charcoal);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .gozney-note .g-icon { font-size: 1.2rem; flex-shrink: 0; }
+  .gozney-note h4 {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--white);
+    margin-bottom: 3px;
+  }
+  .gozney-note p {
+    font-size: 0.75rem;
+    color: var(--stone-light);
+    line-height: 1.5;
+  }
+
+  /* SECTION DIVIDER */
+  .divider {
+    height: 1px;
+    background: var(--stone-light);
+    margin: 1.75rem 0;
+    opacity: 0.4;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-icon">🍕</span>
+  <h1>Neapolitan Dough</h1>
+  <p>Cold Ferment · One Day Prep · Gozney Arc</p>
+</div>
+
+<div class="container">
+
+  <!-- PIZZA COUNT -->
+  <p class="section-label">How many pizzas?</p>
+  <div class="counter-card">
+    <div class="counter-row">
+      <div class="counter-label">
+        Pizzas
+        <span>280g dough balls · ~30cm diameter</span>
+      </div>
+      <div class="counter-controls">
+        <button class="counter-btn" id="btn-minus">−</button>
+        <span class="counter-value" id="pizza-count">6</span>
+        <button class="counter-btn primary" id="btn-plus">+</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOUR TYPE -->
+  <p class="section-label">Caputo flour</p>
+  <div class="flour-grid">
+    <button class="flour-btn active" data-flour="pizzeria">
+      <span class="f-name">Caputo Pizzeria</span>
+      <span class="f-desc">The classic. 12.5% protein. Smooth, elastic, reliable stretch.</span>
+    </button>
+    <button class="flour-btn" data-flour="nuvola">
+      <span class="f-name">Caputo Nuvola</span>
+      <span class="f-desc">Higher protein. More air, lighter cornicione. Excellent on the Arc.</span>
+    </button>
+  </div>
+
+  <!-- HYDRATION -->
+  <p class="section-label">Hydration level</p>
+  <div class="options-grid">
+    <button class="option-btn" data-hydration="60">
+      <span class="opt-val">60%</span>
+      <span class="opt-desc">Firm</span>
+    </button>
+    <button class="option-btn active" data-hydration="62">
+      <span class="opt-val">62%</span>
+      <span class="opt-desc">Classic</span>
+    </button>
+    <button class="option-btn" data-hydration="65">
+      <span class="opt-val">65%</span>
+      <span class="opt-desc">Open crumb</span>
+    </button>
+  </div>
+
+  <!-- INGREDIENTS -->
+  <div class="ingredients-card">
+    <div class="ingredients-header">
+      <h2>Ingredients</h2>
+      <span class="pill" id="pizza-pill">6 pizzas</span>
+    </div>
+    <div id="ingredients-list">
+      <!-- Populated by JS -->
+    </div>
+    <div class="yeast-note" id="yeast-note"></div>
+  </div>
+
+  <div class="gozney-note">
+    <span class="g-icon">🔥</span>
+    <div>
+      <h4>Gozney Arc — target temperature</h4>
+      <p>Pre-heat for 20–30 min. Aim for 430–450°C stone temp. Each pizza cooks in 60–90 seconds. Rotate once at 45 seconds using a turning peel.</p>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <p class="section-label">Cook day planner</p>
+  <div class="timeline-card">
+    <div class="timeline-header">
+      <h2>Your schedule</h2>
+      <p>Set fridge-in and cook time — everything calculated for you</p>
+    </div>
+    <div class="date-row">
+      <label>Balls into fridge</label>
+      <input type="datetime-local" id="fridge-in-time" />
+    </div>
+    <div class="date-row">
+      <label>Cook time</label>
+      <input type="datetime-local" id="cook-time" />
+    </div>
+    <div id="ferment-badge"></div>
+    <div id="timeline-steps"></div>
+  </div>
+
+  <!-- TECHNIQUE TIPS -->
+  <div class="tips-card">
+    <div class="tips-header">
+      <h2>Technique notes</h2>
+    </div>
+    <div class="tip-item">
+      <div class="tip-icon">💧</div>
+      <div class="tip-content">
+        <h4>Autolyse the flour</h4>
+        <p>Mix Allinson's Easy Bake yeast directly into the flour (dry — no dissolving needed). Add most of the water (hold back 50g), mix to a shaggy mass and rest 30 min. Then add the salt dissolved in the reserved water.</p>
+      </div>
+    </div>
+    <div class="tip-item">
+      <div class="tip-icon">✋</div>
+      <div class="tip-content">
+        <h4>Stretch and fold, not knead</h4>
+        <p>Perform 4 sets of stretch-and-folds every 30 minutes during bulk. Wet hands prevent sticking. No aggressive kneading required.</p>
+      </div>
+    </div>
+    <div class="tip-item">
+      <div class="tip-icon">⚖️</div>
+      <div class="tip-content">
+        <h4>Weigh every dough ball</h4>
+        <p>Use a digital scale to portion at exactly 280g. Consistency in ball size = consistent cook time on the Arc.</p>
+      </div>
+    </div>
+    <div class="tip-item">
+      <div class="tip-icon">🫳</div>
+      <div class="tip-content">
+        <h4>Open by hand, never a rolling pin</h4>
+        <p>Press from centre outward with flat fingers, leaving a 2cm rim. Lift and let gravity stretch. A rolling pin destroys the air pockets in the cornicione.</p>
+      </div>
+    </div>
+    <div class="tip-item">
+      <div class="tip-icon">🌡️</div>
+      <div class="tip-content">
+        <h4>Cold fridge = slow flavour</h4>
+        <p>The long cold ferment (18–24h) develops complex lactic acid flavour. Don't skip it — this is the difference between good and exceptional pizza.</p>
+      </div>
+    </div>
+    <div class="tip-item">
+      <div class="tip-icon">⏱️</div>
+      <div class="tip-content">
+        <h4>Out of fridge timing</h4>
+        <p>6–8 hours at room temperature is crucial. Cold dough is dense and won't stretch. At 20°C aim for 7 hours; in a warm kitchen (24°C+) stick to 6.</p>
+      </div>
+    </div>
+    <div class="tip-item">
+      <div class="tip-icon">🍕</div>
+      <div class="tip-content">
+        <h4>Keep pizzas warm after cooking</h4>
+        <p>For a party cook, tent pizzas loosely with foil and place over a warm (not hot) oven at 80°C. Serve within 10 minutes of cooking for best texture.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const BALL_WEIGHT = 280;
+  const SALT_PERCENT = 0.028;
+  // Allinson's Easy Bake is instant yeast — use 0.1% for long cold ferment (less is more with instant)
+  const YEAST_PERCENT = 0.001;
+
+  let pizzas = 6;
+  let hydration = 0.62;
+  let selectedFlour = 'pizzeria';
+
+  function calcIngredients() {
+    const totalDough = pizzas * BALL_WEIGHT;
+    const flour = Math.round(totalDough / (1 + hydration + SALT_PERCENT + YEAST_PERCENT));
+    const water = Math.round(flour * hydration);
+    const salt = Math.round(flour * SALT_PERCENT * 10) / 10;
+    const yeast = parseFloat((flour * YEAST_PERCENT).toFixed(2));
+    return { flour, water, salt, yeast, totalDough };
+  }
+
+  function flourNote() {
+    const notes = {
+      'pizzeria': 'Caputo Pizzeria — 12.5% protein. Tipo 00 milled for wood-fired ovens.',
+      'nuvola': 'Caputo Nuvola — higher protein, more extensible. Ideal for a lighter, airier cornicione.'
+    };
+    return notes[selectedFlour];
+  }
+
+  function renderIngredients() {
+    const { flour, water, salt, yeast, totalDough } = calcIngredients();
+    const list = document.getElementById('ingredients-list');
+    const pill = document.getElementById('pizza-pill');
+    pill.textContent = `${pizzas} pizza${pizzas !== 1 ? 's' : ''}`;
+
+    const items = [
+      { name: `Caputo ${selectedFlour === 'pizzeria' ? 'Pizzeria' : 'Nuvola'} flour`, note: flourNote(), amount: flour, unit: 'g' },
+      { name: 'Water', note: `Room temp, ~21°C — ${Math.round(hydration * 100)}% hydration`, amount: water, unit: 'g' },
+      { name: 'Fine sea salt', note: 'Add to water and stir to dissolve before mixing', amount: salt, unit: 'g' },
+      { name: "Allinson's Easy Bake yeast", note: 'Instant yeast — mix directly into flour, do not dissolve', amount: yeast, unit: 'g' },
+    ];
+
+    list.innerHTML = items.map(i => `
+      <div class="ingredient-row">
+        <div class="ingredient-name">
+          ${i.name}
+          <small>${i.note}</small>
+        </div>
+        <div class="ingredient-amount">${i.amount}<span>${i.unit}</span></div>
+      </div>
+    `).join('');
+
+    // Allinson's Easy Bake is instant — show tsp conversion (1 tsp ≈ 3g)
+    const tsp = parseFloat((yeast / 3).toFixed(2));
+    document.getElementById('yeast-note').innerHTML = `
+      <strong>Allinson's Easy Bake (instant):</strong> ${yeast}g ≈ ${tsp} tsp — mix straight into the flour dry, don't dissolve.<br>
+      Total dough weight: <strong>${totalDough}g</strong> · ${pizzas} × 280g balls
+    `;
+  }
+
+  function formatTime(date) {
+    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', weekday: 'short' }).replace(',', '');
+  }
+
+  function renderTimeline() {
+    const cookInput = document.getElementById('cook-time').value;
+    const fridgeInput = document.getElementById('fridge-in-time').value;
+    const container = document.getElementById('timeline-steps');
+    const badge = document.getElementById('ferment-badge');
+
+    if (!cookInput) {
+      container.innerHTML = `<div style="padding:1.25rem 1.5rem; font-size:0.82rem; color:var(--stone); text-align:center;">Set your cook time above to generate your schedule</div>`;
+      badge.innerHTML = '';
+      return;
+    }
+
+    const cookTime = new Date(cookInput);
+
+    // Cold ferment duration
+    let coldFermentMins = 20 * 60; // default 20h
+    let fridgeInTime = null;
+    if (fridgeInput) {
+      fridgeInTime = new Date(fridgeInput);
+      coldFermentMins = Math.round((cookTime - fridgeInTime) / 60000);
+    }
+
+    const coldFermentHrs = Math.round(coldFermentMins / 60 * 10) / 10;
+
+    // Fridge-out: 7h before cook (safe midpoint of 6-8h window)
+    const fridgeOutMins = 7 * 60;
+
+    // Ferment badge
+    if (fridgeInput) {
+      let badgeClass = 'ok';
+      let badgeMsg = '';
+      if (coldFermentMins < 16 * 60) {
+        badgeClass = 'warn';
+        badgeMsg = `<strong>⚠ Short ferment (${coldFermentHrs}h):</strong> Minimum is 18h for full flavour development. Consider mixing earlier or cooking later.`;
+      } else if (coldFermentMins <= 28 * 60) {
+        badgeClass = 'ok';
+        badgeMsg = `<strong>✓ ${coldFermentHrs}h cold ferment</strong> — perfect range. Expect excellent flavour and a well-structured dough.`;
+      } else if (coldFermentMins <= 36 * 60) {
+        badgeClass = 'warn';
+        badgeMsg = `<strong>⚠ Long ferment (${coldFermentHrs}h):</strong> Pushing beyond 28h with instant yeast. Dough will be very extensible. Check balls when you take them out — if they look collapsed or very bubbly, cook sooner.`;
+      } else {
+        badgeClass = 'over';
+        badgeMsg = `<strong>✗ Very long ferment (${coldFermentHrs}h):</strong> High risk of over-fermentation. The gluten structure may break down. Consider reducing yeast next time or cooking earlier.`;
+      }
+      badge.innerHTML = `<div class="ferment-badge ${badgeClass}">${badgeMsg}</div>`;
+    } else {
+      badge.innerHTML = '';
+    }
+
+    // Work out when balls went in fridge (for display in timeline)
+    // If fridge-in not set, calculate from cook time - coldFermentMins
+    const ballsInFridge = fridgeInTime || new Date(cookTime.getTime() - coldFermentMins * 60000);
+
+    // Mix time: 5.5h before balls go in fridge (to account for autolyse + 4 folds + bulk)
+    const mixOffset = -(coldFermentMins + 5.5 * 60);
+    const fold1Offset = -(coldFermentMins + 4.5 * 60);
+    const bulkOffset = -(coldFermentMins + 3 * 60);
+    const ballOffset = -(coldFermentMins + 0);
+
+    const allSteps = [
+      {
+        offset: mixOffset,
+        label: 'Mix dough & autolyse',
+        desc: "Mix Allinson's Easy Bake yeast into flour dry. Add most of water, mix to shaggy mass, rest 30 min. Then add salt dissolved in reserved water. Mix until smooth.",
+        duration: '30 min rest',
+        key: true
+      },
+      {
+        offset: fold1Offset,
+        label: 'Stretch & fold (4 sets)',
+        desc: 'Wet hands. Stretch each side up and fold to centre. Rotate bowl 90° and repeat. Do 4 sets total, every 30 minutes.',
+        duration: 'Every 30 min × 4',
+        key: false
+      },
+      {
+        offset: bulkOffset,
+        label: 'Bulk ferment at room temp',
+        desc: 'Cover bowl and leave undisturbed. Dough should grow 20–30% and look pillowy.',
+        duration: '2–3 hours',
+        key: false
+      },
+      {
+        offset: ballOffset,
+        label: 'Ball up & into fridge',
+        desc: `Divide into ${pizzas} × 280g balls. Shape tightly with surface tension. Place in lightly oiled tray, cover tightly with cling film. Into the fridge now.`,
+        duration: `${coldFermentHrs}h cold ferment`,
+        key: true
+      },
+      {
+        offset: -fridgeOutMins,
+        label: 'Take dough out of fridge',
+        desc: 'Leave balls covered with cling film in the tray — do not uncover. They need to come to room temperature slowly. Do not remove cling film until just before stretching, or a skin will form.',
+        duration: '7h at room temp',
+        key: true
+      },
+      {
+        offset: -(2 * 60),
+        label: 'Check the dough',
+        desc: 'Peek under the cling film. Balls should be soft, slightly domed, with a gentle sheen. Press one lightly — it should spring back slowly. If still firm and cold, leave longer.',
+        duration: 'Readiness check',
+        key: false
+      },
+      {
+        offset: -30,
+        label: 'Pre-heat the Gozney Arc',
+        desc: 'Full flame for 20–30 min. Target 430–450°C on the stone. Use an IR thermometer to confirm before launching.',
+        duration: '20–30 min pre-heat',
+        key: true
+      },
+      {
+        offset: 0,
+        label: '🍕 Cook time',
+        desc: 'Uncover balls just before opening. Press from centre outward, leaving a 2cm rim. Launch. 60–90 sec per pizza, rotate at 45 sec.',
+        duration: null,
+        key: true,
+        isCook: true
+      }
+    ];
+
+    container.innerHTML = allSteps.map((step, i) => {
+      const t = new Date(cookTime.getTime() + step.offset * 60 * 1000);
+      const isLast = i === allSteps.length - 1;
+      return `
+        <div class="step-item">
+          <div class="step-time">${formatTime(t)}</div>
+          <div class="step-line">
+            <div class="step-dot ${step.key ? '' : 'dim'}"></div>
+            ${!isLast ? '<div class="step-connector"></div>' : ''}
+          </div>
+          <div class="step-content">
+            <h3 style="${step.isCook ? 'color:var(--terracotta)' : ''}">${step.label}</h3>
+            <p>${step.desc}</p>
+            ${step.duration ? `<span class="step-duration">${step.duration}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Init times: fridge in = tonight 22:00, cook = tomorrow 19:00
+  function initCookTime() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+    const fridgeIn = new Date(now);
+    fridgeIn.setHours(22, 0, 0, 0);
+    if (fridgeIn < now) fridgeIn.setDate(fridgeIn.getDate() + 1);
+
+    const cookTime = new Date(fridgeIn);
+    cookTime.setDate(cookTime.getDate() + 1);
+    cookTime.setHours(19, 0, 0, 0);
+
+    document.getElementById('fridge-in-time').value = fmt(fridgeIn);
+    document.getElementById('cook-time').value = fmt(cookTime);
+  }
+
+  // Hydration buttons
+  document.querySelectorAll('[data-hydration]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-hydration]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      hydration = parseInt(btn.dataset.hydration) / 100;
+      renderIngredients();
+    });
+  });
+
+  // Flour buttons
+  document.querySelectorAll('[data-flour]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-flour]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedFlour = btn.dataset.flour;
+      renderIngredients();
+    });
+  });
+
+  // Counter
+  document.getElementById('btn-minus').addEventListener('click', () => {
+    if (pizzas > 1) { pizzas--; document.getElementById('pizza-count').textContent = pizzas; renderIngredients(); renderTimeline(); }
+  });
+  document.getElementById('btn-plus').addEventListener('click', () => {
+    if (pizzas < 20) { pizzas++; document.getElementById('pizza-count').textContent = pizzas; renderIngredients(); renderTimeline(); }
+  });
+
+  // Cook time + fridge-in
+  document.getElementById('cook-time').addEventListener('change', renderTimeline);
+  document.getElementById('fridge-in-time').addEventListener('change', renderTimeline);
+
+  // Init
+  initCookTime();
+  renderIngredients();
+  renderTimeline();
+</script>
+</body>
+</html>
